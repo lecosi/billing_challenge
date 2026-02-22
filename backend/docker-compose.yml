@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: billing_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-billing_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-billing_password}
+      POSTGRES_DB: ${POSTGRES_DB:-billing_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build: .
+    container_name: billing_api
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://billing_user:billing_password@db:5432/billing_db}
+      API_KEY_SECRET: ${API_KEY_SECRET:-api-key-secret}
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
