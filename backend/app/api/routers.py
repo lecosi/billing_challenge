@@ -4,7 +4,7 @@ from datetime import datetime
 
 from app.api.schemas import (
     DocumentCreate, DocumentResponse, PaginatedDocumentResponse,
-    BatchProcessRequest, JobResponse, BatchProcessResponse
+    BatchProcessRequest, JobResponse, BatchProcessResponse, DocumentUpdate
 )
 from app.application.use_cases import DocumentUseCase, BatchJobUseCase
 from app.domain.models import DocumentType, DocumentState
@@ -99,6 +99,39 @@ def get_document(
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found")
     return doc
+
+
+@router.patch(
+    "/documents/{doc_id}",
+    response_model=DocumentResponse,
+    summary="Partially update a billing document",
+    description=(
+        "Updates one or more fields of an existing billing document. "
+        "Only the fields provided in the request body will be changed — omitted fields remain untouched. "
+        "**Status cannot be changed via this endpoint**: use `POST /documents/batch/process` "
+        "to drive state transitions through the state machine."
+    ),
+    responses={
+        200: {"description": "Document updated successfully"},
+        404: {"description": "Document not found"},
+        422: {"description": "Validation error — invalid payload or empty body"},
+    },
+    tags=["Documents"],
+)
+def update_document(
+    doc_id: str,
+    doc_in: DocumentUpdate,
+    use_case: DocumentUseCase = Depends(get_document_use_case),
+):
+    updated = use_case.update_document(
+        doc_id=doc_id,
+        invoice_type=doc_in.invoice_type,
+        amount=doc_in.amount,
+        metadata_doc=doc_in.metadata_doc,
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return updated
 
 
 @router.post(

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, model_validator
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from app.domain.models import DocumentState, DocumentType, JobStatus
@@ -24,6 +24,44 @@ class DocumentCreate(BaseModel):
         description="Optional free-form metadata to attach to the document",
         examples=[{"client": "Acme Corp", "reference": "REF-001"}],
     )
+
+
+
+class DocumentUpdate(BaseModel):
+    """Payload for partially updating a billing document.
+
+    All fields are optional — only the fields provided will be changed.
+    Status is intentionally excluded: use the batch/process endpoint
+    to drive state transitions through the state machine.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    invoice_type: Optional[DocumentType] = Field(
+        default=None,
+        description="New document type (replaces current type)",
+        examples=["receipt"],
+    )
+    amount: Optional[float] = Field(
+        default=None,
+        gt=0,
+        description="New amount — must be greater than zero if provided",
+        examples=[2000.00],
+    )
+    metadata_doc: Optional[Dict[str, Any]] = Field(
+        default=None,
+        alias="metadata",
+        description="New metadata object (replaces current metadata entirely)",
+        examples=[{"client": "Beta LLC", "reference": "REF-002"}],
+    )
+
+    @model_validator(mode="after")
+    def at_least_one_field(self) -> "DocumentUpdate":
+        """Reject a payload where every field is None (no-op update)."""
+        if self.invoice_type is None and self.amount is None and self.metadata_doc is None:
+            raise ValueError("At least one field must be provided for an update.")
+        return self
+
 
 
 class DocumentResponse(BaseModel):

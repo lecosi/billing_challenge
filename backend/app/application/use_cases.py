@@ -19,6 +19,26 @@ class DocumentUseCase:
     def get_document(self, doc_id: str) -> Optional[Document]:
         return self.repo.get_by_id(doc_id)
 
+    def update_document(
+        self,
+        doc_id: str,
+        invoice_type=None,
+        amount: Optional[float] = None,
+        metadata_doc: Optional[Dict[str, Any]] = None,
+    ) -> Optional[Document]:
+        doc = self.repo.get_by_id(doc_id)
+        if not doc:
+            return None
+
+        if invoice_type is not None:
+            doc.invoice_type = invoice_type
+        if amount is not None:
+            doc.amount = amount
+        if metadata_doc is not None:
+            doc.metadata_doc = metadata_doc
+
+        return self.repo.save(doc)
+
     def search_documents(
         self, skip: int, limit: int, **filters
     ) -> Tuple[List[Document], int]:
