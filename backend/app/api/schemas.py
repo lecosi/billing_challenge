@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime
-from app.domain.models import DocumentState, DocumentType
+from app.domain.models import DocumentState, DocumentType, JobStatus
 
 class DocumentCreate(BaseModel):
     invoice_type: DocumentType
@@ -24,3 +24,14 @@ class PaginatedDocumentResponse(BaseModel):
     total: int
     skip: int
     limit: int
+
+class BatchProcessRequest(BaseModel):
+    document_ids: List[str]
+
+class JobResponse(BaseModel):
+    id: str
+    document_ids: List[str]
+    status: JobStatus
+    created_at: datetime
+    completed_at: Optional[datetime] = None
+    error_message: Optional[str] = None

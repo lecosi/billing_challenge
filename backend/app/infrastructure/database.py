@@ -5,17 +5,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./billing_local.db")
-
-if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
-    connect_args = {"check_same_thread": False} # its only for sqlite
-else:
-    connect_args = {}
-
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args=connect_args
-)
-
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://billing_user:billing_password@db:5432/billing_db")
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()

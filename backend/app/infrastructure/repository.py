@@ -3,8 +3,8 @@ from sqlalchemy import desc
 from typing import List, Optional, Tuple
 from datetime import datetime
 
-from app.domain.models import Document, DocumentState, DocumentType
-from app.infrastructure.models import DocumentDB
+from app.domain.models import Document, BatchJob, DocumentState, DocumentType
+from app.infrastructure.models import DocumentDB, BatchJobDB
 
 class DocumentRepository:
     def __init__(self, db: Session):
@@ -88,3 +88,39 @@ class DocumentRepository:
         ]
         
         return documents, total
+
+class JobRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def save(self, job: BatchJob) -> BatchJob:
+        db_job = self.db.query(BatchJobDB).filter(BatchJobDB.id == job.id).first()
+        if not db_job:
+            db_job = BatchJobDB(
+                id=job.id, 
+                document_ids=job.document_ids, 
+                status=job.status,
+                created_at=job.created_at, 
+                completed_at=job.completed_at, 
+                error_message=job.error_message
+            )
+            self.db.add(db_job)
+        else:
+            db_job.status = job.status
+            db_job.completed_at = job.completed_at
+            db_job.error_message = job.error_message
+        self.db.commit()
+        return job
+
+    def get_by_id(self, job_id: str) -> Optional[BatchJob]:
+        db_job = self.db.query(BatchJobDB).filter(BatchJobDB.id == job_id).first()
+        if not db_job:
+            return None
+        return BatchJob(
+            id=db_job.id, 
+            document_ids=db_job.document_ids, 
+            status=db_job.status,
+            created_at=db_job.created_at, 
+            completed_at=db_job.completed_at, 
+            error_message=db_job.error_message
+        )
