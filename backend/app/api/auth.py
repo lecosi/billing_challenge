@@ -7,7 +7,7 @@ import redis
 
 logger = logging.getLogger(__name__)
 
-RATE_LIMIT = 10  # max requests per IP per 60-second window
+RATE_LIMIT = 60  # max requests per IP per 60-second window
 API_KEY_NAME = "X-API-Key"
 API_KEY_SECRET = os.getenv("API_KEY_SECRET", "api-key-secret")
 REDIS_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")

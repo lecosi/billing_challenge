@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import app.infrastructure.database as db_module
 from app.infrastructure.database import Base
 from app.api.routers import router
@@ -49,6 +50,18 @@ app = FastAPI(
     license_info={
         "name": "MIT",
     },
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",   # Vite dev server
+        "http://localhost:3000",   # CRA fallback
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(router)

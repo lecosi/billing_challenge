@@ -22,7 +22,7 @@ services:
       - "6379:6379"
 
   api:
-    build: .
+    build: ./backend
     container_name: billing_api
     restart: always
     ports:
@@ -36,7 +36,7 @@ services:
       - redis
 
   worker:
-    build: .
+    build: ./backend
     container_name: billing_worker
     restart: always
     environment:
@@ -46,6 +46,20 @@ services:
     depends_on:
       - db
       - redis
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Pasa VITE_API_URL en tiempo de compilación; en Docker, Nginx redirige el hostname /api a api:8000
+        VITE_API_URL: /api
+        VITE_API_KEY: ccf26ad1-c694-463a-834a-7e666d94424b
+    container_name: billing_frontend
+    restart: always
+    ports:
+      - "80:80" # Exponemos el frontend en el puerto 80 por default
+    depends_on:
+      - api
 
 volumes:
   postgres_data:

@@ -687,7 +687,7 @@ class TestRateLimiting:
 
     def test_request_at_limit_boundary_is_allowed(self, client, headers, mock_redis):
         """The request exactly at the limit (count == RATE_LIMIT) is still allowed."""
-        mock_redis.incr.return_value = 10  # exactly at the limit
+        mock_redis.incr.return_value = 60  # exactly at the limit
 
         response = client.get("/documents", headers=headers)
 
@@ -695,7 +695,7 @@ class TestRateLimiting:
 
     def test_request_over_limit_returns_429(self, client, headers, mock_redis):
         """Once the counter exceeds RATE_LIMIT the limiter returns 429."""
-        mock_redis.incr.return_value = 11  # one over the limit
+        mock_redis.incr.return_value = 61  # one over the limit
 
         response = client.get("/documents", headers=headers)
 
