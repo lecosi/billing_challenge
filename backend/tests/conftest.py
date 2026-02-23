@@ -73,7 +73,12 @@ def db_session(setup_database):
 
 @pytest.fixture
 def client(setup_database):
-    """TestClient con override de get_db apuntando a SQLite."""
+    """TestClient con override de get_db apuntando a SQLite.
+
+    base_url is set so that Starlette populates request.client with a
+    loopback address — without it request.client is None and the
+    rate_limiter crashes with AttributeError: 'NoneType'.host.
+    """
     def override_get_db():
         db = TestingSessionLocal()
         try:
@@ -82,7 +87,7 @@ def client(setup_database):
             db.close()
 
     app.dependency_overrides[get_db] = override_get_db
-    with TestClient(app) as c:
+    with TestClient(app, base_url="http://testclient") as c:
         yield c
     app.dependency_overrides.clear()
 

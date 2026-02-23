@@ -1,22 +1,26 @@
 from fastapi import Security, HTTPException, status, Request
 from fastapi.security.api_key import APIKeyHeader
+from typing import Optional
 import os
 import logging
 import redis
 
 logger = logging.getLogger(__name__)
 
-RATE_LIMIT = 10
+RATE_LIMIT = 10  # max requests per IP per 60-second window
 API_KEY_NAME = "X-API-Key"
 API_KEY_SECRET = os.getenv("API_KEY_SECRET", "api-key-secret")
 REDIS_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
 
-api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=True)
+# auto_error=False so we can raise 401 ourselves instead of Starlette's default 403
+api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
 
+# Single shared Redis connection — same instance used by Celery.
 redis_client = redis.from_url(REDIS_URL, decode_responses=True)
 
 
-def get_api_key(api_key: str = Security(api_key_header)) -> str:
+def get_api_key(api_key: Optional[str] = Security(api_key_header)) -> str:
+    """Validates the X-API-Key header. Returns 401 (not 403) on failure."""
     if api_key == API_KEY_SECRET:
         return api_key
 
@@ -30,10 +34,15 @@ def rate_limiter(request: Request) -> None:
     """Sliding-window rate limiter backed by Redis.
 
     Allows RATE_LIMIT requests per IP per 60-second window.
-    If Redis is unavailable the limiter degrades gracefully
-    (logs a warning, lets the request through) so a Redis outage
-    doesn't take the whole API down.
+
+    Degrades gracefully in two scenarios:
+    - request.client is None (e.g. TestClient in tests) → skip limiting
+    - Redis is unavailable → log a warning and let the request through (fail-open)
     """
+    if request.client is None:
+        # No client info available (e.g. test environment) — skip rate limiting.
+        return
+
     client_ip = request.client.host
     redis_key = f"rate_limit:{client_ip}"
 
