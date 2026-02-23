@@ -8,15 +8,23 @@ compartan la misma base de datos en memoria. Sin esto, create_all
 crea las tablas en la conexión A pero el test usa la conexión B
 (vacía) → "no such table".
 """
+import os
+# Must be set BEFORE any app module is imported so database.py picks up
+# SQLite instead of the Postgres URL from .env.
+os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
+
 import pytest
+from unittest.mock import MagicMock, patch
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool  # ← la corrección clave
+from sqlalchemy.pool import StaticPool
+from app.infrastructure.database import Base, get_db
+from app.main import app
+from fastapi.testclient import TestClient
+import app.infrastructure.database as db_module
 
 SQLALCHEMY_TEST_URL = "sqlite:///:memory:"
 
-# StaticPool garantiza que todas las checkins/checkouts del pool
-# devuelvan LA MISMA conexión subyacente → misma DB en memoria.
 test_engine = create_engine(
     SQLALCHEMY_TEST_URL,
     connect_args={"check_same_thread": False},
@@ -24,20 +32,11 @@ test_engine = create_engine(
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
-# ---------------------------------------------------------------
-# Monkey-patch ANTES de importar app para que main.py use SQLite
-# ---------------------------------------------------------------
-import app.infrastructure.database as db_module
 db_module.engine = test_engine
 db_module.SessionLocal = TestingSessionLocal
 
-from app.infrastructure.database import Base, get_db
-from app.main import app
-from fastapi.testclient import TestClient
-
-
 # ---------------------------------------------------------------
-# Fixtures de ciclo de vida
+# Fixtures
 # ---------------------------------------------------------------
 
 @pytest.fixture(autouse=True)
@@ -46,6 +45,20 @@ def setup_database():
     Base.metadata.create_all(bind=test_engine)
     yield
     Base.metadata.drop_all(bind=test_engine)
+
+
+@pytest.fixture(autouse=True)
+def mock_redis():
+    """Patches the Redis client for ALL tests so no live Redis is needed.
+
+    The mock simulates the INCR counter behaviour so rate-limit tests
+    can exercise the 429 path by controlling the return value directly.
+    """
+    mock = MagicMock()
+    mock.incr.return_value = 1   # default: first request in the window
+    mock.expire.return_value = True
+    with patch("app.api.auth.redis_client", mock):
+        yield mock
 
 
 @pytest.fixture
@@ -75,7 +88,7 @@ def client(setup_database):
 
 
 # ---------------------------------------------------------------
-# Fixtures de datos compartidos
+# Shared fixtures
 # ---------------------------------------------------------------
 
 @pytest.fixture

@@ -9,10 +9,10 @@ from app.api.schemas import (
 from app.application.use_cases import DocumentUseCase, BatchJobUseCase
 from app.domain.models import DocumentType, DocumentState
 from app.api.dependencies import get_document_use_case, get_batch_job_use_case
-from app.api.auth import get_api_key
+from app.api.auth import get_api_key, rate_limiter
 
 router = APIRouter(
-    dependencies=[Depends(get_api_key)],
+    dependencies=[Depends(get_api_key), Depends(rate_limiter)],
     responses={401: {"description": "Invalid or missing API key"}},
 )
 

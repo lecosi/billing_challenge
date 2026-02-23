@@ -668,3 +668,58 @@ class TestUpdateDocumentUseCase:
         """update_document must never alter the status field."""
         updated = use_case.update_document(existing_doc.id, amount=50.0)
         assert updated.status == DocumentState.DRAFT
+
+
+# ================================================================
+# Rate Limiting — 429 behaviour
+# ================================================================
+
+class TestRateLimiting:
+    """Tests for the Redis-backed per-IP rate limiter."""
+
+    def test_request_within_limit_is_allowed(self, client, headers, mock_redis):
+        """Requests within the limit window return a normal response (not 429)."""
+        mock_redis.incr.return_value = 1  # well within the 10 req/min limit
+
+        response = client.get("/documents", headers=headers)
+
+        assert response.status_code == 200
+
+    def test_request_at_limit_boundary_is_allowed(self, client, headers, mock_redis):
+        """The request exactly at the limit (count == RATE_LIMIT) is still allowed."""
+        mock_redis.incr.return_value = 10  # exactly at the limit
+
+        response = client.get("/documents", headers=headers)
+
+        assert response.status_code == 200
+
+    def test_request_over_limit_returns_429(self, client, headers, mock_redis):
+        """Once the counter exceeds RATE_LIMIT the limiter returns 429."""
+        mock_redis.incr.return_value = 11  # one over the limit
+
+        response = client.get("/documents", headers=headers)
+
+        assert response.status_code == 429
+        assert "rate limit" in response.json()["detail"].lower()
+
+    def test_rate_limit_applies_to_all_endpoints(self, client, headers, mock_redis):
+        """Rate limiting is enforced on POST /documents as well (router-level dep)."""
+        mock_redis.incr.return_value = 99
+
+        response = client.post(
+            "/documents",
+            json={"invoice_type": "invoice", "amount": 100.0, "metadata": {}},
+            headers=headers,
+        )
+
+        assert response.status_code == 429
+
+    def test_redis_failure_degrades_gracefully(self, client, headers, mock_redis):
+        """If Redis is unavailable the limiter lets the request through (fail-open)."""
+        import redis as redis_lib
+        mock_redis.incr.side_effect = redis_lib.RedisError("connection refused")
+
+        response = client.get("/documents", headers=headers)
+
+        # Should succeed — the limiter degrades gracefully on Redis errors.
+        assert response.status_code == 200
