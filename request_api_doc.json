@@ -1,0 +1,240 @@
+{
+    "info": {
+        "name": "billing_challenge",
+        "description": null,
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "crear-documento",
+            "request": {
+                "method": "post",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "disabled": false,
+                        "type": "default"
+                    },
+                    {
+                        "key": "X-API-Key",
+                        "value": "ccf26ad1-c694-463a-834a-7e666d94424b",
+                        "disabled": false,
+                        "type": "default"
+                    }
+                ],
+                "auth": {
+                    "type": "noauth"
+                },
+                "description": "",
+                "url": {
+                    "raw": "http://localhost:8000/documents",
+                    "protocol": "http",
+                    "host": [
+                        "localhost:8000"
+                    ],
+                    "path": [
+                        "documents"
+                    ],
+                    "query": [],
+                    "variable": []
+                },
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"invoice_type\": \"receipt\",\n  \"amount\": 4000.0,\n  \"metadata\": {\n    \"cliente\": \"Empresa duppla\",\n    \"prioridad\": \"media\"\n  }\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "job-status",
+            "request": {
+                "method": "get",
+                "header": [
+                    {
+                        "key": "X-API-Key",
+                        "value": "ccf26ad1-c694-463a-834a-7e666d94424b",
+                        "disabled": false,
+                        "type": "default"
+                    }
+                ],
+                "auth": {
+                    "type": "noauth"
+                },
+                "description": "",
+                "url": {
+                    "raw": "http://localhost:8000/jobs/0022a6c0-0a8e-4b0e-9805-9a6b41e5874d",
+                    "protocol": "http",
+                    "host": [
+                        "localhost:8000"
+                    ],
+                    "path": [
+                        "jobs",
+                        "0022a6c0-0a8e-4b0e-9805-9a6b41e5874d"
+                    ],
+                    "query": [],
+                    "variable": []
+                }
+            }
+        },
+        {
+            "name": "procesar-documentos-batch",
+            "request": {
+                "method": "post",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "disabled": false,
+                        "type": "default"
+                    },
+                    {
+                        "key": "X-API-Key",
+                        "value": "ccf26ad1-c694-463a-834a-7e666d94424b",
+                        "disabled": false,
+                        "type": "default"
+                    }
+                ],
+                "auth": {
+                    "type": "noauth"
+                },
+                "description": "",
+                "url": {
+                    "raw": "http://localhost:8000/documents/batch/process",
+                    "protocol": "http",
+                    "host": [
+                        "localhost:8000"
+                    ],
+                    "path": [
+                        "documents",
+                        "batch",
+                        "process"
+                    ],
+                    "query": [],
+                    "variable": []
+                },
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"document_ids\": [\n    \"4e619cf7-725e-42b6-8b3c-0bc694df7f69\"\n  ]\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "name": "obtener-documentos",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "X-API-Key",
+                        "value": "ccf26ad1-c694-463a-834a-7e666d94424b",
+                        "disabled": false,
+                        "type": "default"
+                    }
+                ],
+                "auth": {
+                    "type": "noauth"
+                },
+                "description": "",
+                "url": {
+                    "raw": "http://localhost:8000/documents",
+                    "protocol": "http",
+                    "host": [
+                        "localhost:8000"
+                    ],
+                    "path": [
+                        "documents"
+                    ],
+                    "query": [],
+                    "variable": []
+                }
+            }
+        },
+        {
+            "name": "obtener-documento-ID",
+            "request": {
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "X-API-Key",
+                        "value": "ccf26ad1-c694-463a-834a-7e666d94424b",
+                        "disabled": false,
+                        "type": "default"
+                    }
+                ],
+                "auth": {
+                    "type": "noauth"
+                },
+                "description": "",
+                "url": {
+                    "raw": "http://localhost:8000/documents/4e619cf7-725e-42b6-8b3c-0bc694df7f69",
+                    "protocol": "http",
+                    "host": [
+                        "localhost:8000"
+                    ],
+                    "path": [
+                        "documents",
+                        "4e619cf7-725e-42b6-8b3c-0bc694df7f69"
+                    ],
+                    "query": [],
+                    "variable": []
+                }
+            }
+        },
+        {
+            "name": "actualizar-documento",
+            "request": {
+                "method": "patch",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "disabled": false,
+                        "type": "default"
+                    },
+                    {
+                        "key": "X-API-Key",
+                        "value": "ccf26ad1-c694-463a-834a-7e666d94424b",
+                        "disabled": false,
+                        "type": "default"
+                    }
+                ],
+                "auth": {
+                    "type": "noauth"
+                },
+                "description": "",
+                "url": {
+                    "raw": "http://localhost:8000/documents/4e619cf7-725e-42b6-8b3c-0bc694df7f69",
+                    "protocol": "http",
+                    "host": [
+                        "localhost:8000"
+                    ],
+                    "path": [
+                        "documents",
+                        "4e619cf7-725e-42b6-8b3c-0bc694df7f69"
+                    ],
+                    "query": [],
+                    "variable": []
+                },
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"amount\": 1234.56, \n  \"invoice_type\": \"proof of payment\",\n  \"metadata\": {\n    \"client\": \"Beta LLC\",\n    \"reference\": \"REF-042\"\n  }\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "variable": []
+}
