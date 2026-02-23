@@ -34,16 +34,11 @@ def rate_limiter(request: Request) -> None:
     """Sliding-window rate limiter backed by Redis.
 
     Allows RATE_LIMIT requests per IP per 60-second window.
-
-    Degrades gracefully in two scenarios:
-    - request.client is None (e.g. TestClient in tests) → skip limiting
-    - Redis is unavailable → log a warning and let the request through (fail-open)
+    Uses a fallback key when request.client is None (e.g. ASGI test transport)
+    so the limiter always executes and mocks work correctly in tests.
+    Degrades gracefully when Redis is unavailable (fail-open).
     """
-    if request.client is None:
-        # No client info available (e.g. test environment) — skip rate limiting.
-        return
-
-    client_ip = request.client.host
+    client_ip = request.client.host if request.client else "testclient"
     redis_key = f"rate_limit:{client_ip}"
 
     try:
